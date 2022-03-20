@@ -1,0 +1,173 @@
+{"code": "Success", "message": "Group has been created", "data": {"id": "butterfly_dictatorship", "name": "warehouse_code_dev", "created_at": "2022-03-17T12:17:14.056588Z"}}{"code": "Success", "message": "Group has been created", "data": {"id": "flora_tion", "name": "warehouse_code", "created_at": "2022-03-17T12:19:04.702698Z"}}{
+  "code": "Success",
+  "message": "Group has been created",
+  "data": {
+    "id": "apace_assist",
+    "name": "warehouse_code1",
+    "created_at": "2022-03-17T21:31:23.650933Z"
+  }
+}{
+  "code": "Success",
+  "message": "Group has been created",
+  "data": {
+    "id": "inappropriate_timber",
+    "name": "warehouse_11",
+    "created_at": "2022-03-20T14:19:59.272103Z"
+  }
+}{
+  "code": "Success",
+  "message": "Connector has been created",
+  "data": {
+    "id": "slicing_toiled",
+    "group_id": "inappropriate_timber",
+    "service": "google_cloud_sqlserver",
+    "service_version": 2,
+    "schema": "connector_demo",
+    "connected_by": "blockade_abilities",
+    "created_at": "2022-03-20T14:20:14.639525Z",
+    "succeeded_at": null,
+    "failed_at": null,
+    "paused": true,
+    "pause_after_trial": false,
+    "sync_frequency": 60,
+    "schedule_type": "auto",
+    "status": {
+      "setup_state": "connected",
+      "sync_state": "paused",
+      "update_state": "on_schedule",
+      "is_historical_sync": true,
+      "tasks": [],
+      "warnings": []
+    },
+    "setup_tests": [
+      {
+        "title": "Connecting to host",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "title": "Validating certificate",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "title": "Validating replication config",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "title": "Connecting to SSH tunnel",
+        "status": "SKIPPED",
+        "message": ""
+      },
+      {
+        "title": "Connecting to database",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "title": "Checking access to schema",
+        "status": "PASSED",
+        "message": ""
+      }
+    ],
+    "config": {
+      "host": "146.148.83.14",
+      "port": 1433,
+      "database": "fivetran_test",
+      "user": "fivetranadmin",
+      "password": "******",
+      "connection_type": "Directly"
+    }
+  }
+}{
+  "code": "Success",
+  "message": "Group has been created",
+  "data": {
+    "id": "fishing_paramedic",
+    "name": "warehouse_11",
+    "created_at": "2022-03-20T14:29:29.422526Z"
+  }
+}{
+  "code": "Success",
+  "message": "Connector has been created",
+  "data": {
+    "id": "sanctification_populate",
+    "group_id": "fishing_paramedic",
+    "service": "google_cloud_sqlserver",
+    "service_version": 2,
+    "schema": "connector_demo",
+    "connected_by": "blockade_abilities",
+    "created_at": "2022-03-20T14:29:44.214359Z",
+    "succeeded_at": null,
+    "failed_at": null,
+    "paused": true,
+    "pause_after_trial": false,
+    "sync_frequency": 60,
+    "schedule_type": "auto",
+    "status": {
+      "setup_state": "connected",
+      "sync_state": "paused",
+      "update_state": "on_schedule",
+      "is_historical_sync": true,
+      "tasks": [],
+      "warnings": []
+    },
+    "setup_tests": [
+      {
+        "title": "Connecting to database",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "title": "Validating replication config",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "title": "Connecting to host",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "title": "Checking access to schema",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "title": "Connecting to SSH tunnel",
+        "status": "SKIPPED",
+        "message": ""
+      },
+      {
+        "title": "Validating certificate",
+        "status": "PASSED",
+        "message": ""
+      }
+    ],
+    "config": {
+      "host": "146.148.83.14",
+      "port": 1433,
+      "database": "fivetran_test",
+      "user": "fivetranadmin",
+      "password": "******",
+      "connection_type": "Directly"
+    }
+  }
+}{
+  "code": "Success",
+  "message": "Group has been created",
+  "data": {
+    "id": "comfort_libel",
+    "name": "warehouse_11",
+    "created_at": "2022-03-20T14:53:30.194178Z"
+  }
+}{
+  "code": "Success",
+  "message": "Group has been created",
+  "data": {
+    "id": "mice_specifying",
+    "name": "warehouse_11",
+    "created_at": "2022-03-20T16:00:13.950319Z"
+  }
+}
