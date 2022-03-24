@@ -14,18 +14,24 @@ class createBaseFivetranObj(ABC):
     FAIL = "FAIL"
     PASSED = "PASSED"
     CONNECTED = "CONNECTED"
+    # Verify connector creation object
+    SETUP_STATE = "SETUP_STATE"
+    DB_CONNECTION = "CONNECTING_TO_DATABASE"
+    HOST_CONNECTION = "CONNECTING_TO_HOST"
+    CERT_VALIDATION = "VALIDATING_CERTIFICATE"
+    VALIDATION: list = [DB_CONNECTION, HOST_CONNECTION, CERT_VALIDATION]
 
     @abstractmethod
     def build(self, http_protocol: str, fivetran: str, api_version: str) -> str:
         """Builds API call path"""
 
     @abstractmethod
-    def verify_payload(self, payload: dict) -> None:
-        """Validates request payload"""
-
-    @abstractmethod
     def execute(self, header, url, auth, json) -> dict:
         """Makes an actual api request for created object"""
+
+    # @abstractmethod
+    # def execute_modify(self, header, url, auth, json) -> dict:
+    #     """Makes an actual api request for created object"""
 
     @abstractmethod
     def validate(self, response: dict) -> bool:
@@ -48,28 +54,18 @@ class create_warehouse(createBaseFivetranObj):
 
         return http_protocol + "://" + fivetran + "/" + api_version + "/" + group_route
 
-    def verify_payload(self, payload: dict):
-        """Sanity check of payload though payload is being verified and constructured in payload_builder"""
-        log_info(__name__).info("Verify payload passed to API")
-        if isinstance(payload, dict):
-            key_name = list(payload.keys())[0]
-            group_name = list(payload.values())[0]
-
-            if not group_name or key_name != "name":
-                raise ValueError(
-                    f"Either group_name is null or payload key is not name"
-                )
-        else:
-            raise Exception(f"payload object is not a dict please pass is as a dict")
-
     def execute(self, header, creation_api, auth, payload) -> dict:
         log_info(__name__).info("Making actual call to API")
 
-        response = requests.post(
-            headers=header, url=creation_api, auth=auth, json=payload
-        ).json()
+        try:
 
-        return response
+            response = requests.post(
+                headers=header, url=creation_api, auth=auth, json=payload
+            ).json()
+
+            return response
+        except Exception as e:
+            log_info(__name__).exception(f"Group creation failed - {e}")
 
     def validate(self, response: dict):
         log_info(__name__).info("Starting the process of validating API response")
@@ -86,11 +82,8 @@ class create_warehouse(createBaseFivetranObj):
             )
             error_msg = message(response["message"])
             log_info(__name__).exception(
-                f"Response validation failure:Group Creation Status{code} {error_msg}"
+                f"Response validation failure:Group Creation Status -{code}:{error_msg}"
             )
-            # raise Exception(
-            #     f"Response validation failure:Group Creation Status{code} {error_msg}"
-            # )
 
     def store_success_resp(self, response: dict, location: str):
         log_info(__name__).info("Storing response to storage")
@@ -108,7 +101,7 @@ class create_warehouse(createBaseFivetranObj):
             return f"Error in writing - {e}"
 
 
-class create_connectors(createBaseFivetranObj):
+class create_db_connectors(createBaseFivetranObj):
     def build(
         self, http_protocol: str, fivetran: str, api_version: str, connector_route: str
     ) -> str:
@@ -119,37 +112,36 @@ class create_connectors(createBaseFivetranObj):
 
     def execute(self, header, creation_api, auth, payload):
         log_info(__name__).info("Making actual call to API")
-        response = requests.post(
-            headers=header, url=creation_api, auth=auth, json=payload
-        ).json()
-
-        return response
-
-    def verify_payload(self, payload: dict):
-        """Sanity check of payload though payload is being verified and constructured in payload_builder"""
-
-        if isinstance(payload, dict):
-            group_name = list(payload.values())[0]
-            if not group_name:
-                log_info(__name__).exception(f"group_name cannot be null")
-        else:
-            log_info(__name__).exception(
-                f"payload object is not a dict please pass is as a dict"
-            )
+        try:
+            response = requests.post(
+                headers=header, url=creation_api, auth=auth, json=payload
+            ).json()
+            return response
+        except Exception as e:
+            log_info(__name__).exception(f"Db connector creation failed - {e}")
 
     def validate(self, response: dict):
         log_info(__name__).info("Starting the process of validating API response")
         log_info(__name__).info(f"Response received : {response}")
+        val: int = 0
+        total_val: int = len(self.VALIDATION)
+        for validation in self.VALIDATION:
+            for specific_test in response["data"]["setup_tests"]:
+                test_value = str(specific_test.values())
+                if validation.lower().replace("_", " ") in test_value.lower():
+                    if specific_test["status"].lower() == self.PASSED.lower():
+                        val += 1
 
         if (
             response["code"].lower() == self.SUCCESS.lower()
-            and response["data"]["setup_tests"][0]["status"].lower()
-            == self.PASSED.lower()
-            and response["data"]["setup_tests"][1]["status"].lower()
-            == self.PASSED.lower()
-            and response["data"]["setup_tests"][2]["status"].lower()
-            == self.PASSED.lower()
+            and response["data"]["status"][self.SETUP_STATE.lower()]
+            == self.CONNECTED.lower()
+            and total_val == val
         ):
+            log_out_str = f'{response["code"].lower()} : {self.SUCCESS.lower()} \
+                            {response["data"]["status"][self.SETUP_STATE.lower()]} : {self.CONNECTED.lower()}'
+
+            log_info(__name__).info(log_out_str)
             return True
         else:
             code = response["code"]
@@ -159,12 +151,9 @@ class create_connectors(createBaseFivetranObj):
                 else "Test run " + response["data"]["setup_tests"]["message"]
             )
             error_msg = message(response["message"])
-            log_info(__name__).exception(
-                f"Response validation failure:Group Creation Status{code} {error_msg}"
+            log_info(__name__).error(
+                f"Response validation failure:Connector Creation Status -{code}:{error_msg}"
             )
-            # raise Exception(
-            #     f"Response validation failure:Connector Creation Status{code} {error_msg}"
-            # )
 
     def store_success_resp(self, response: dict, location: str):
         try:
@@ -201,14 +190,13 @@ class create_destination(createBaseFivetranObj):
 
     def execute(self, header, creation_api, auth, payload):
         log_info(__name__).info("Making actual call to API")
-        response = requests.post(
-            headers=header, url=creation_api, auth=auth, json=payload
-        ).json()
-        return response
-
-    def verify_payload(self, payload: dict):
-        """Sanity check of payload though payload is being verified and constructured in payload_builder"""
-        log_info(__name__).info("I am verify destination payload")
+        try:
+            response = requests.post(
+                headers=header, url=creation_api, auth=auth, json=payload
+            ).json()
+            return response
+        except Exception as e:
+            log_info(__name__).exception(f"Destination creation failed - {e}")
 
     def validate(self, response: dict):
 
@@ -232,12 +220,9 @@ class create_destination(createBaseFivetranObj):
                 else "Test run " + response["data"]["setup_tests"]["message"]
             )
             error_msg = message(response["message"])
-            log_info(__name__).exception(
-                f"Response validation failure:Group Creation Status{code} {error_msg}"
+            log_info(__name__).error(
+                f"Response validation failure:Destination Creation Status -{code}:{error_msg}"
             )
-            # raise Exception(
-            #     f"Response validation failure:Destination Creation Status{code} {error_msg}"
-            # )
 
     def store_success_resp(self, response: dict, location: str):
         try:
@@ -256,7 +241,7 @@ class create_destination(createBaseFivetranObj):
 class fivetran:
     def __init__(
         self,
-        c: createBaseFivetranObj,
+        cls: createBaseFivetranObj,
         protocol,
         core_fivetran_url,
         api_version,
@@ -266,7 +251,7 @@ class fivetran:
         request_type,
         file_location,
     ) -> None:
-        self.client = c
+        self.client = cls
         self.http_protocol = protocol
         self.fivetran_base_api = core_fivetran_url
         self.api_version = api_version
@@ -279,14 +264,14 @@ class fivetran:
     def create_fivetran_requested_object(self):
 
         """
-        # Step -1 : Verify Payload -> verify_payload()
+        # Step -1 : Verify Payload -> responsibilty is with payload_builder class
         # Step -2 : Buil API -> build()
         # Step -3 : Authenicate and build headers -> authenicate ()
         # Step -4 : Execute API request -> execute()
         # Step -5 : Verify API response -> validate()
 
         """
-        self.client.verify_payload(self.request_payload)
+        # self.client.verify_payload(self.request_payload)
         basic_api_call = self.client.build(
             self.http_protocol,
             self.fivetran_base_api,
