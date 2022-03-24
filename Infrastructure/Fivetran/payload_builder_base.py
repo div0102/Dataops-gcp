@@ -1,7 +1,8 @@
+import json
 from abc import ABC, abstractmethod
 
 from base_logger import log_info
-from utils import get_fivetran_configs, get_object_detail
+from utils import get_fivetran_configs, get_object_detail, log_known_err_and_exit
 from verify_base import verfiyFivetranObj
 
 
@@ -21,33 +22,38 @@ class payloadBuilder(ABC):
 
 
 class create_warehouse_payload_builder(payloadBuilder):
-    def build_payload(self, warehouse_name: dict) -> dict:
+    def build_payload(self, warehouse_name: dict, fivetran_configs: dict) -> dict:
         log_info(__name__).info(f"Buildig payload for group request")
         if not warehouse_name["name"]:
-            log_info(__name__).exception(f"Cannot create a warehouse without a name")
+            error_msg = "Cannot create a warehouse without a name"
+            log_known_err_and_exit(__name__, error_msg)
+
         payload = {"name": warehouse_name["name"]}
         return payload
 
 
 class create_connector_payload_builder(payloadBuilder):
-    def build_payload(self, connector_vals: dict) -> dict:
+    def build_payload(self, connector_vals: dict, fivetran_configs: dict) -> dict:
+
+        log_info(__name__).info(f"Buildig payload for connector request")
 
         if not connector_vals["service"]:
-            log_info(__name__).exception(
-                f"Cannot create connector without a type of service"
-            )
-        fivetran_configs = get_fivetran_configs(secret_id="fivetran-global")
+            error_msg = "Cannot create connector without a type of service"
+            log_known_err_and_exit(__name__, error_msg)
+
+        # fivetran_configs = get_fivetran_configs(secret_id="fivetran-global")
         group_id = get_object_detail(
             verfiyFivetranObj, "groups", connector_vals["group_name"], fivetran_configs
         )
+
         if not group_id:
-            log_info(__name__).exception(f"Cannot create connector without group id")
+            error_msg = "Cannot create connector without group id"
+            log_known_err_and_exit(__name__, error_msg)
+
         config = get_fivetran_configs(secret_id=connector_vals["configs"])
         if not config:
-            log_info(__name__).exception(
-                f"Cannot create connector without a type of defining its configs"
-            )
-        log_info(__name__).info(f"Buildig payload for connector request")
+            error_msg = "Cannot create connector without a type of defining its configs"
+            log_known_err_and_exit(__name__, error_msg)
 
         payload = {
             "service": connector_vals["service"],
@@ -66,24 +72,30 @@ class create_connector_payload_builder(payloadBuilder):
 
 
 class create_destination_payload_builder(payloadBuilder):
-    def build_payload(self, connector_vals: dict) -> dict:
+    def build_payload(self, connector_vals: dict, fivetran_configs: dict) -> dict:
+
+        log_info(__name__).info(f"Buildig payload for destination request")
 
         if not connector_vals["service"]:
-            log_info(__name__).exception(
-                f"Cannot create connector without a type of service"
-            )
-        fivetran_configs = get_fivetran_configs(secret_id="fivetran-global")
+            error_msg = "Cannot create connector without a type of service"
+            log_known_err_and_exit(__name__, error_msg)
+
+        # fivetran_configs = get_fivetran_configs(secret_id="fivetran-global")
         group_id = get_object_detail(
             verfiyFivetranObj, "groups", connector_vals["group_name"], fivetran_configs
         )
         if not group_id:
-            log_info(__name__).exception(f"Cannot create connector without group id")
+            error_msg = "Cannot create connector without group id"
+            log_known_err_and_exit(__name__, error_msg)
+
         config = get_fivetran_configs(secret_id=connector_vals["configs"])
+        _secret = get_fivetran_configs(secret_id="fivetran-dest-secret")
+        config["secret_key"] = json.dumps(_secret)
+
+        # log_info(__name__).info(f"Config_Obj:{config}")
         if not config:
-            log_info(__name__).exception(
-                f"Cannot create connector without a type of defining its configs"
-            )
-        log_info(__name__).info(f"Buildig payload for destination request")
+            error_msg = "Cannot create connector without a type of defining its configs"
+            log_known_err_and_exit(__name__, error_msg)
 
         payload = {
             "group_id": group_id,

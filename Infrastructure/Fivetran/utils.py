@@ -21,15 +21,32 @@ def get_fivetran_configs(
     project_id="759965731268", secret_id=None, version_id="latest"
 ):
     log_info(__name__).info(f"Fetching Fivetran configs for {secret_id}")
+    secrets = []
 
     sm_client = SecretManagerServiceClient()
-    config_path = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
+    # config_path = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
+    config_path = sm_client.secret_path(project_id, secret_id)
 
-    response = sm_client.access_secret_version(name=config_path)
+    for version in sm_client.list_secret_versions(parent=config_path):
+        response = sm_client.access_secret_version(name=version.name)
+        try:
+            payload = response.payload.data.decode("UTF-8")
+            dictionised_payload = json.loads(payload)
+        except:
+            payload = response.payload.data.decode("UTF-8").replace("\n", ",")
+            dictionised_payload = json.loads(payload)
 
-    payload = response.payload.data.decode("UTF-8")
+        secrets.append(dictionised_payload)
 
-    return json.loads(payload)
+    # We are only interested in comparing recently updated two secret versions for drift detection
+
+    if len(secrets) == 1:
+        log_info(__name__).info(f"No newer version found for {secret_id}")
+        return secrets[0]  # ('CREATE',secrets[0])
+    else:
+        log_info(__name__).info(f"Newer version found for {secret_id}")
+        log_info(__name__).info(f"Treating it as a modification request")
+        return secrets[0]  # ('MODIFY',secrets[0])
 
 
 def get_object_detail(verification_obj, object_type, object_name, object_config_dict):
@@ -44,7 +61,7 @@ def get_object_detail(verification_obj, object_type, object_name, object_config_
         valid_response, requested_data = verification.search_object_by_name(
             response, search_in_object_type
         )
-        log_info(__name__).info(f"{valid_response} - {requested_data}")
+        log_info(__name__).info(f"{search_in_object_type}_id - {requested_data}")
         if valid_response == "Data_Found":
             return requested_data
         else:
@@ -53,3 +70,8 @@ def get_object_detail(verification_obj, object_type, object_name, object_config_
                 break
             else:
                 requested_data = requested_data
+
+
+def log_known_err_and_exit(name: str, msg: str):
+    log_info(name).error(f"{msg}")
+    raise SystemExit

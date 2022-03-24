@@ -20,13 +20,13 @@ class verfiyFivetranObj:
         """Generic method to build API call use
         detail_type field to pass information for which you need to retrieve information
         """
-        print(
-            self.http_protocol,
-            self.fivetran,
-            self.api_version,
-            self.detail_type,
-            self.cursor_limit,
-        )
+        # print(
+        #     self.http_protocol,
+        #     self.fivetran,
+        #     self.api_version,
+        #     self.detail_type,
+        #     self.cursor_limit,
+        # )
         return (
             self.http_protocol
             + "://"
@@ -54,7 +54,7 @@ class verfiyFivetranObj:
         Difference object has different response type i.e
         Groups has reponse from connectors.
         """
-        print(response)
+        # print(response)
         if response["code"].lower() == "Success".lower():
             for requested_data in response["data"]["items"]:
 
